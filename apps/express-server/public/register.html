@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Register — EduEquity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="w-full max-w-md bg-white p-8 rounded-lg shadow">
+        <h2 class="text-2xl font-bold mb-4">Create an account</h2>
+        <form id="registerForm">
+          <label class="block text-sm">Full name</label>
+          <input id="name" name="name" required class="w-full p-2 border rounded mb-3" />
+          <label class="block text-sm">Email</label>
+          <input id="email" name="email" type="email" required class="w-full p-2 border rounded mb-3" />
+          <label class="block text-sm">Password</label>
+          <input id="password" name="password" type="password" required class="w-full p-2 border rounded mb-4" />
+          <label class="block text-sm">Role (principal/teacher/student)</label>
+          <input id="role" name="role" class="w-full p-2 border rounded mb-4" placeholder="student" />
+          <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded">Create account</button>
+        </form>
+        <div id="msg" class="text-sm text-red-600 mt-3" />
+        <script>
+          document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value || 'student';
+            try {
+              const resp = await fetch('/api/v1/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, role })
+              });
+              const data = await resp.json();
+              if (!data.success) {
+                document.getElementById('msg').textContent = data.message || 'Registration failed';
+                return;
+              }
+              // Save user and auto-redirect after registration (prototype)
+              try { localStorage.setItem('ee_user', JSON.stringify(data.user)); } catch (e) {}
+              if (data.user?.role === 'principal') window.location.href = '/dashboard/principal';
+              else if (data.user?.role === 'teacher') window.location.href = '/dashboard/teacher';
+              else window.location.href = '/dashboard/student';
+            } catch (err) {
+              document.getElementById('msg').textContent = 'Network error';
+            }
+          });
+        </script>
+        <p class="text-sm text-gray-600 mt-4">Already have an account? <a href="/login" class="text-indigo-600">Sign in</a></p>
+      </div>
+    </div>
+  </body>
+</html>

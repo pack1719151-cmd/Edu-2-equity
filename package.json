@@ -1,0 +1,44 @@
+{
+  "name": "eduequity-os",
+  "version": "1.0.0",
+  "description": "EduEquity OS - An educational equity platform with attendance tracking, quiz management, and approval workflows",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "cd apps/api && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "build": "npm run build --workspaces",
+    "build:web": "npm run build --workspace=apps/web",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "setup": "bash scripts/setup.sh",
+    "setup:symlinks": "bash scripts/setup-radix-symlinks.sh",
+    "verify": "bash scripts/verify_setup.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "education",
+    "equity",
+    "attendance",
+    "quiz",
+    "dashboard",
+    "nextjs",
+    "fastapi"
+  ],
+  "author": "EduEquity Team",
+  "license": "MIT",
+  "dependencies": {
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-slot": "^1.2.4"
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Teacher Dashboard — EduEquity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50">
+    <header class="p-4 bg-white shadow">
+      <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="font-semibold">EduEquity — Teacher</div>
+        <nav class="space-x-4">
+          <a href="/" class="text-sm">Home</a>
+          <a href="/login" class="text-sm">Logout</a>
+        </nav>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">My Classes</h1>
+      <div id="classes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-white rounded shadow">Loading classes…</div>
+      </div>
+      <section class="mt-6">
+        <h2 class="font-semibold mb-2">Quizzes</h2>
+        <div id="quizzesList" class="space-y-2 p-2 bg-white rounded">
+          Loading quizzes…
+        </div>
+
+        <h3 class="mt-4 font-semibold">Create Quiz</h3>
+        <form id="createQuiz" class="p-4 bg-white rounded mt-2">
+          <input id="q_title" placeholder="Title" class="w-full p-2 border rounded mb-2" />
+          <input id="q_classId" placeholder="Class ID" class="w-full p-2 border rounded mb-2" />
+          <input id="q_teacherId" placeholder="Teacher ID" class="w-full p-2 border rounded mb-2" />
+          <textarea id="q_questions" placeholder='Questions JSON (array of {text,type,correctAnswer,points})' class="w-full p-2 border rounded mb-2" rows="4"></textarea>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Create</button>
+          <div id="q_msg" class="text-sm text-green-600 mt-2"></div>
+        </form>
+      </section>
+
+      <script>
+        async function loadQuizzes() {
+          try {
+            const resp = await fetch('/api/v1/quizzes');
+            const json = await resp.json();
+            const listEl = document.getElementById('quizzesList');
+            if (!json.success) { listEl.textContent = 'Failed to load'; return; }
+            listEl.innerHTML = '';
+            json.data.forEach(q => {
+              const d = document.createElement('div');
+              d.className = 'p-3 border rounded';
+              d.innerHTML = `<strong>${q.title}</strong> — ${q.status} <div class="text-sm text-gray-600">${q.description || ''}</div>`;
+              listEl.appendChild(d);
+            });
+          } catch (err) { console.error(err); }
+        }
+
+        document.getElementById('createQuiz').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = document.getElementById('q_title').value;
+          const classId = document.getElementById('q_classId').value;
+          const teacherId = document.getElementById('q_teacherId').value || (JSON.parse(localStorage.getItem('ee_user')||'null')||{}).id;
+          let questions = [];
+          try { questions = JSON.parse(document.getElementById('q_questions').value); } catch (err) { document.getElementById('q_msg').textContent = 'Invalid questions JSON'; return; }
+          try {
+            const resp = await fetch('/api/v1/quizzes', {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ title, description: '', classId, teacherId, questions })
+            });
+            const data = await resp.json();
+            if (data.success) { document.getElementById('q_msg').textContent = 'Quiz created'; loadQuizzes(); }
+            else document.getElementById('q_msg').textContent = data.message || 'Failed';
+          } catch (err) { document.getElementById('q_msg').textContent = 'Network error'; }
+        });
+
+        loadQuizzes();
+      </script>
+    </main>
+  </body>
+</html>

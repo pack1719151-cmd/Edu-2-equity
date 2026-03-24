@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Principal Dashboard — EduEquity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50">
+    <header class="p-4 bg-white shadow">
+      <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="font-semibold">EduEquity — Principal</div>
+        <nav class="space-x-4">
+          <a href="/" class="text-sm">Home</a>
+          <a href="/login" class="text-sm">Logout</a>
+        </nav>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">School Overview</h1>
+      <div id="overview" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div id="totalStudents" class="p-4 bg-white rounded shadow">Total Students<br><span class="text-3xl font-semibold">—</span></div>
+        <div id="avgScore" class="p-4 bg-white rounded shadow">Average Score<br><span class="text-3xl font-semibold">—</span></div>
+        <div id="quizzesGiven" class="p-4 bg-white rounded shadow">Quizzes Given<br><span class="text-3xl font-semibold">—</span></div>
+      </div>
+      <section class="mt-6">
+        <h2 class="font-semibold mb-2">Analytics Snapshot</h2>
+        <div id="analytics" class="space-y-2">
+          <div id="attendance" class="p-4 bg-white rounded">Loading attendance…</div>
+          <div id="performance" class="p-4 bg-white rounded">Loading performance…</div>
+          <div id="engagement" class="p-4 bg-white rounded">Loading engagement…</div>
+        </div>
+      </section>
+      <script>
+        async function loadAnalytics() {
+          try {
+            const resp = await fetch('/api/v1/analytics');
+            const json = await resp.json();
+            if (!json.success) return;
+            const data = json.data;
+            // Simple summary
+            document.getElementById('attendance').textContent = 'Recent attendance: ' + (data.attendance?.slice(-1)[0]?.rate ?? '—') + '%';
+            const perf = data.performance?.map(p => p.subject + ': ' + p.average + '%').join(' | ');
+            document.getElementById('performance').textContent = 'Performance — ' + (perf || '—');
+            const eng = data.engagement?.map(e => e.metric + ': ' + e.value + ' (' + (e.change>0?'+':'')+ e.change + ')').join(' | ');
+            document.getElementById('engagement').textContent = 'Engagement — ' + (eng || '—');
+
+            // Populate top overview values where available
+            document.getElementById('totalStudents').querySelector('span').textContent = data.engagement?.find(e=>e.metric==='Active Students')?.value ?? '—';
+            document.getElementById('avgScore').querySelector('span').textContent = Math.round((data.performance?.reduce((s,v)=>s+v.average,0) / (data.performance?.length||1))||0) + '%';
+            // quizzes count via quizzes endpoint
+            const qresp = await fetch('/api/v1/quizzes');
+            const qjson = await qresp.json();
+            document.getElementById('quizzesGiven').querySelector('span').textContent = qjson.total ?? (qjson.data?.length ?? '—');
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        loadAnalytics();
+      </script>
+    </main>
+  </body>
+</html>
